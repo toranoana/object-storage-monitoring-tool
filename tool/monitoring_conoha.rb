@@ -7,7 +7,7 @@ CONOHA_API_KEY = '************'
 CONOHA_API_TENANT = '**************'
 SLACK_HOOK = '***********'
 
-def get_conoha_api_token
+def conoha_api_token
   # アクセスするためのURLを生成
   base_url = 'https://identity.tyo1.conoha.io/v2.0/tokens'
   uri = URI.parse(base_url)
@@ -40,7 +40,7 @@ def get_conoha_api_token
   result['access']['token']['id']
 end
 
-def get_storage_capacity(api_token)
+def storage_capacity(api_token)
   # アクセスするためのURLを生成
   base_url = 'https://object-storage.tyo1.conoha.io/v1/nc_' + CONOHA_API_TENANT
   uri = URI.parse(base_url)
@@ -59,7 +59,7 @@ def get_storage_capacity(api_token)
     x.request(req)
   end
 
-  #使用率を算出
+  # 使用率を算出
   used_storage = res['x-account-bytes-used'].to_i / 1_073_741_824
   max_storage = res['x-account-meta-quota-bytes'].to_i / 1_073_741_824
   proportion = (used_storage.to_f / max_storage.to_f) * 100
@@ -67,14 +67,13 @@ def get_storage_capacity(api_token)
 
   # Slackに通知するメッセージを整形
   if proportion >= 80
-　 # ディスク使用率が80％以上に達した時は、メンション付きで、さらに強調して通知
+  # ディスク使用率が80％以上に達した時は、メンション付きで、さらに強調して通知
     message_header = '<!here>*【現在、ConoHaのディスク容量が少なくなってきています！対応をお願いします！！】*'
   else
-    message_header =  '【現在のConoHaのディスク容量をお知らせします】'
+    message_header = '【現在のConoHaのディスク容量をお知らせします】'
   end
 
- message_header + '
-  容量: ' + max_storage.to_s + 'G / 使用中: ' + used_storage.to_s + 'G
+ message_header + '\n容量: ' + max_storage.to_s + 'G / 使用中: ' + used_storage.to_s + 'G
   *使用率: ' + proportion.to_s + '%*'
 end
 
@@ -86,6 +85,6 @@ def send_slcak(message)
   Net::HTTP.post_form(uri, payload: payload.to_json)
 end
 
-api_token = get_conoha_api_token
-message = get_storage_capacity(api_token)
+api_token = conoha_api_token
+message = storage_capacity(api_token)
 send_slcak(message)
